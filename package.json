@@ -1,0 +1,14 @@
+{
+  "name": "jack-guo-personal-site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "eleventy --pathprefix=/personal-site/",
+    "build:root": "eleventy",
+    "preview": "eleventy --serve",
+    "preview:project": "eleventy --serve --pathprefix=/personal-site/"
+  },
+  "devDependencies": {
+    "@11ty/eleventy": "^3.1.2"
+  }
+}
