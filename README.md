@@ -1,37 +1,48 @@
-# Personal archive
+# Personal Archive
 
-A standalone Eleventy static site for a dated gallery, travel, and games timeline. Entries are Markdown files; there is no database or admin panel.
+A static, public personal archive for dated gallery, travel, and games entries. The source repository can remain private; Cloudflare Pages serves the built site publicly.
 
-## Preview and build
+## Local preview and build
 
 ```sh
 npm ci
 npm run preview
-npm run build
+npm run build:root
 ```
 
-`npm run preview` serves the site at the root for local preview. `npm run build` uses `/personal-site/` as its base path for a GitHub Pages project site. Use `npm run preview:project` to preview with that base path. If deployed at a domain root instead, build with `npm run build:root`. Built files go to `_site/`.
+`npm run preview` serves the site at the root. `npm run build:root` writes the Cloudflare-ready site to `_site/`; the homepage and assets use root-relative paths. `npm run build` and `npm run preview:project` retain the legacy `/personal-site/` path prefix and are not used for the Cloudflare deployment.
+
+The production origin is kept in `src/_data/site.json`. Leave `url` empty until Cloudflare provides the actual `*.pages.dev` address. Once known, set it to the HTTPS origin only (no trailing slash or path); canonical and Open Graph URLs and `sitemap.xml` are then generated from that value. No placeholder production address is published.
 
 ## Add or update an entry
 
 1. Copy `templates/entry-example.md` to `src/content/entries/YYYY-short-name.md`.
-2. Set a real `YYYY-MM-DD` date, one of `gallery`, `travel`, or `games`, and `draft: true`.
+2. Set a real quoted `YYYY-MM-DD` date, one of `gallery`, `travel`, or `games`, and `draft: true`.
 3. Copy images into `src/assets/images/YYYY/short-name/`. Reference each image as `/images/YYYY/short-name/file.webp`; include useful alt text, its actual date, and its own caption.
-4. Add any optional entry text below the front matter. Each image's note is kept with that image rather than replaced by the entry text.
-5. Preview, then change `draft: true` to `draft: false` when the entry is ready to publish. Published entries appear in date-descending order, grouped by year; category filters reuse the same timeline.
+4. Add optional entry text below the front matter. Keep each image's note with that image.
+5. Preview the result, then set `draft: false` only when ready to publish. Entries appear newest first, grouped by year; category filters reuse the same timeline.
 
-Use `YYYY-MM-DD` quoted as a string to avoid date or time-zone conversion. Add an image time only when the actual time is known. Images retain their aspect ratio, load lazily, and open in a larger viewer when selected.
+Use `YYYY-MM-DD` as a quoted string to avoid date or time-zone conversion. Add an image time only when it is known. Images retain their aspect ratio, load lazily, and open in the larger viewer when selected.
 
-Replace a photo by replacing the file at the same path, or update its `src`. Edit a caption in the Markdown file. Delete the Markdown file to remove its entry. The example entry under `src/content/entries/` is a draft used to verify the format and is never published.
+Replace a photo by replacing the file at the same path, or update its `src`. Edit a caption in the Markdown file. Delete the Markdown file to remove an entry. Drafts are excluded from the published timeline.
 
-## GitHub web editing
+## Cloudflare Pages deployment
 
-Open the repository on GitHub and use **Add file → Create new file** at `src/content/entries/YYYY-short-name.md`, or upload the Markdown file and its images into their matching paths. Set `draft: false` only when ready. Commit to `main`; the Pages workflow builds the site. Check **Actions** for the deployment result, then open the Pages URL from the workflow.
+Create a Pages project using Git integration with these settings:
 
-## Local workflow
+| Setting | Value |
+|---|---|
+| Project name | `quiet-canvas-archive` (if unavailable, add a neutral suffix) |
+| Repository | `Jack311045/personal-site` |
+| Production branch | `main` |
+| Root directory | Repository root |
+| Build command | `npm run build:root` |
+| Build output directory | `_site` |
+| Node.js | 20 or later |
 
-Install Node.js 20 or later, run `npm ci`, add Markdown and image files as described above, and run `npm run preview` to review the result. Commit the files to `main` and push to the GitHub repository.
+Do not authorize access to the career-site repository or other repositories. Keep the site public and do not add password protection, career links, or source-repository links to visitor-facing pages.
+In the Pages project settings, set the `NODE_VERSION` environment variable to `20` for the Production environment (and Preview if it will be used).
 
-## Deploy
+## Maintenance
 
-This folder is intended to be the root of its own `personal-site` repository. The included workflow builds with the `/personal-site/` base path and deploys to GitHub Pages. In repository settings, enable Pages with **GitHub Actions** as the source. The workflow assumes a repository published at `https://jack311045.github.io/personal-site/`; update the build base path in `.github/workflows/pages.yml` and package scripts if the final URL changes.
+Add Markdown and images → run `npm run preview` → commit and push to `main` → wait for Cloudflare's automatic build → check the deployment result in Cloudflare → open the production URL.

@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const categories = new Set(["gallery", "travel", "games"]);
+const site = JSON.parse(fs.readFileSync(path.resolve("src/_data/site.json"), "utf8"));
 
 function isRealDate(value) {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -10,11 +11,25 @@ function isRealDate(value) {
 }
 
 export default function (eleventyConfig) {
+  if (!site.title || !site.description || typeof site.url !== "string" || (site.url && !/^https:\/\/[a-z0-9.-]+$/i.test(site.url))) {
+    throw new Error("Site metadata needs a title, description, and an HTTPS origin without a path or trailing slash.");
+  }
+
   eleventyConfig.on("eleventy.before", async () => {
     await fs.promises.rm(path.resolve("_site"), { recursive: true, force: true });
   });
 
-  eleventyConfig.addPassthroughCopy({ "src/assets": "assets", "src/assets/images": "images" });
+  eleventyConfig.on("eleventy.after", async () => {
+    if (!site.url) return;
+    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${site.url}/</loc></url></urlset>\n`;
+    await fs.promises.writeFile(path.resolve("_site/sitemap.xml"), sitemap, "utf8");
+  });
+
+  eleventyConfig.addPassthroughCopy({
+    "src/assets/css": "assets/css",
+    "src/assets/js": "assets/js",
+    "src/assets/images": "images",
+  });
   eleventyConfig.addFilter("groupByYear", (entries) => {
     const groups = [];
     for (const entry of entries) {
