@@ -21,19 +21,21 @@
   <body>
     <header class="site-header">
       <a class="wordmark" href="{{ '/' | url }}">Personal <span>Archive</span></a>
-      <span class="header-note">A quiet collection of moments</span>
+      <span class="header-note">my life in a nutshell</span>
     </header>
     <main>
       <section class="intro">
-        <p class="eyebrow">LIFE, IN FRAGMENTS</p>
-        <h1>A timeline of things<br>worth remembering.</h1>
+        <p class="eyebrow">Jack311045's</p>
+        <h1>TIMELINE</h1>
         <p>Photos, places, and play — collected by the date they happened.</p>
       </section>
       <nav class="filters" aria-label="Filter timeline by category">
         <button class="filter-button is-active" type="button" data-filter="all" aria-pressed="true">All</button>
         <button class="filter-button" type="button" data-filter="gallery" aria-pressed="false">Gallery</button>
         <button class="filter-button" type="button" data-filter="travel" aria-pressed="false">Travel</button>
+        <button class="filter-button" type="button" data-filter="food" aria-pressed="false">Food</button>
         <button class="filter-button" type="button" data-filter="games" aria-pressed="false">Games</button>
+        <button class="filter-button" type="button" data-filter="daily" aria-pressed="false">Daily</button>
       </nav>
       <section class="timeline" aria-label="Dated entries">
         {% set yearGroups = collections.timeline | groupByYear %}
@@ -42,26 +44,26 @@
             <section class="year-group" data-year="{{ group.year }}">
               <h2 class="year-heading"><span>{{ group.year }}</span><span class="year-rule"></span></h2>
               {% for entry in group.entries %}
-                <article class="timeline-entry" data-category="{{ entry.data.category }}">
+                <article class="timeline-entry">
                   <div class="entry-date"><time datetime="{{ entry.data.date }}">{{ entry.data.date }}</time>{% if entry.data.time %}<span>{{ entry.data.time }}</span>{% endif %}</div>
                   <div class="entry-main">
-                    <div class="entry-heading"><span class="category-label category-{{ entry.data.category }}">{{ entry.data.category }}</span><h3>{{ entry.data.title }}</h3></div>
+                    {% if entry.data.title != group.year %}<div class="entry-heading"><h3>{{ entry.data.title }}</h3></div>{% endif %}
                     {% if entry.data.images.length %}
                       <div class="image-grid">
                         {% for image in entry.data.images %}
-                          {% set imageDate = image.date or entry.data.date %}
-                          <figure>
-                            <button class="image-open" type="button" data-src="{{ image.src | url }}" data-alt="{{ image.alt }}" data-caption="{{ image.caption }}" data-date="{{ imageDate }}" aria-label="View image: {{ image.alt }}">
-                              <img src="{{ image.src | url }}" alt="{{ image.alt }}" loading="lazy">
+                          {% set imageUrl = image.src | imageUrl | url %}
+                          <figure class="timeline-image" data-category="{{ image.category }}">
+                            <button class="image-open" type="button" data-src="{{ imageUrl }}" data-alt="{{ image.alt }}" data-caption="{{ image.caption }}" data-date="{{ image.date }}" aria-label="View image: {{ image.alt }}">
+                              <img src="{{ imageUrl }}" alt="{{ image.alt }}" loading="lazy">
                               <span class="zoom-indicator" aria-hidden="true">View image ↗</span>
                             </button>
-                            <figcaption><time datetime="{{ imageDate }}">{{ imageDate }}</time>{% if image.time %}<span class="image-time"> · {{ image.time }}</span>{% endif %}<p>{{ image.caption }}</p></figcaption>
+                            <figcaption><span class="category-label category-{{ image.category }}">{{ image.category }}</span><br><time datetime="{{ image.date }}">{{ image.date }}</time>{% if image.time %}<span class="image-time"> · {{ image.time }}</span>{% endif %}<p>{{ image.caption }}</p></figcaption>
+                            {% if image.tags.length %}<ul class="tag-list" aria-label="Tags">{% for tag in image.tags %}<li>{{ tag }}</li>{% endfor %}</ul>{% endif %}
                           </figure>
                         {% endfor %}
                       </div>
                     {% endif %}
                     {% if entry.templateContent | trim %}<div class="entry-body">{{ entry.templateContent | safe }}</div>{% endif %}
-                    {% if entry.data.tags.length %}<ul class="tag-list" aria-label="Tags">{% for tag in entry.data.tags %}<li>{{ tag }}</li>{% endfor %}</ul>{% endif %}
                   </div>
                 </article>
               {% endfor %}
@@ -77,7 +79,7 @@
         {% endif %}
       </section>
     </main>
-    <footer class="site-footer"><span>Personal Archive</span><span>Made for keeping, not scrolling.</span></footer>
+    <footer class="site-footer"><span>Personal Archive</span><span>人活着是为了色小偶像</span></footer>
     <dialog class="lightbox" aria-label="Image viewer">
       <form method="dialog"><button class="lightbox-close" aria-label="Close image viewer">Close <span aria-hidden="true">×</span></button></form>
       <img class="lightbox-image" alt="">

@@ -1,24 +1,36 @@
 const filterButtons = [...document.querySelectorAll(".filter-button")];
 const entries = [...document.querySelectorAll(".timeline-entry")];
+const timelineImages = [...document.querySelectorAll(".timeline-image")];
 const yearGroups = [...document.querySelectorAll(".year-group")];
 const emptyMessage = document.querySelector(".filter-empty");
+let activeCategory = null;
 
 filterButtons.forEach((button) => {
   button.addEventListener("click", () => {
-    const category = button.dataset.filter;
+    activeCategory = button.dataset.filter === "all"
+      ? null
+      : activeCategory === button.dataset.filter
+        ? null
+        : button.dataset.filter;
     filterButtons.forEach((item) => {
-      const active = item === button;
+      const active = activeCategory === null
+        ? item.dataset.filter === "all"
+        : item.dataset.filter === activeCategory;
       item.classList.toggle("is-active", active);
       item.setAttribute("aria-pressed", String(active));
     });
+    timelineImages.forEach((image) => {
+      image.hidden = activeCategory !== null && image.dataset.category !== activeCategory;
+    });
     entries.forEach((entry) => {
-      entry.hidden = category !== "all" && entry.dataset.category !== category;
+      const images = [...entry.querySelectorAll(".timeline-image")];
+      entry.hidden = activeCategory !== null && (images.length === 0 || images.every((image) => image.hidden));
     });
     yearGroups.forEach((group) => {
       group.hidden = !group.querySelector(".timeline-entry:not([hidden])");
     });
     if (emptyMessage) {
-      emptyMessage.hidden = entries.some((entry) => !entry.hidden);
+      emptyMessage.hidden = activeCategory === null || entries.some((entry) => !entry.hidden);
     }
   });
 });

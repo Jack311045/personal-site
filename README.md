@@ -1,6 +1,6 @@
 # Personal Archive
 
-A static, public personal archive for dated gallery, travel, and games entries. The source repository can remain private; Cloudflare Pages serves the built site publicly.
+A static, public personal archive for dated gallery, travel, food, games, and daily entries. The source repository can remain private; Cloudflare Pages serves the built site publicly.
 
 ## Local preview and build
 
@@ -16,13 +16,14 @@ The production origin is kept in `src/_data/site.json`. Leave `url` empty until 
 
 ## Add or update an entry
 
-1. Copy `templates/entry-example.md` to `src/content/entries/YYYY-short-name.md`.
-2. Set a real quoted `YYYY-MM-DD` date, one of `gallery`, `travel`, or `games`, and `draft: true`.
-3. Copy images into `src/assets/images/YYYY/short-name/`. Reference each image as `/images/YYYY/short-name/file.webp`; include useful alt text, its actual date, and its own caption.
-4. Add optional entry text below the front matter. Keep each image's note with that image.
-5. Preview the result, then set `draft: false` only when ready to publish. Entries appear newest first, grouped by year; category filters reuse the same timeline.
+1. Copy `templates/entry-example.md` to `src/content/entries/YYYY/YYYY.M.md` for a monthly collection. One Markdown entry can hold as many images as you want; you do not need one file per photo.
+2. Set the entry's quoted `date` to `YYYY-MM` for a month-level collection or `YYYY-MM-DD` for an exact day, and keep `draft: true` while editing. The `title` can be the year (for example, `2026`); year-only titles are not repeated under the automatic year heading.
+3. Copy images into `src/assets/images/YYYY/YYYY.M/`. Add each as an item under `images`, using `/images/YYYY/YYYY.M/file.webp`, a date, useful alt text, its own caption, a category (`gallery`, `travel`, `food`, `games`, or `daily`), and a tags list (use `[""]` if there are no tags).
+4. A copied Windows path such as `personal-site\src\assets\images\2026\2026.2\photo.png` is also accepted and rendered as `/images/2026/2026.2/photo.png`.
+5. Add optional entry text below the front matter.
+6. Preview the result, then set `draft: false` only when ready to publish. Entries appear newest first, grouped by year; category filters apply to each image independently. Clicking an active category again clears the filter.
 
-Use `YYYY-MM-DD` as a quoted string to avoid date or time-zone conversion. Add an image time only when it is known. Images retain their aspect ratio, load lazily, and open in the larger viewer when selected.
+Use quoted dates to avoid date or time-zone conversion. A month-level entry sorts after exact-day entries in that month; use a full `YYYY-MM-DD` date if you need exact day ordering. A time can only be supplied with a full date. Images retain their aspect ratio, load lazily, and open in the larger viewer when selected.
 
 Replace a photo by replacing the file at the same path, or update its `src`. Edit a caption in the Markdown file. Delete the Markdown file to remove an entry. Drafts are excluded from the published timeline.
 

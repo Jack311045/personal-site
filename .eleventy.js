@@ -1,13 +1,32 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const categories = new Set(["gallery", "travel", "games"]);
+const categories = new Set(["gallery", "travel", "food", "games", "daily"]);
 const site = JSON.parse(fs.readFileSync(path.resolve("src/_data/site.json"), "utf8"));
 
 function isRealDate(value) {
-  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const parsed = new Date(`${value}T00:00:00Z`);
-  return !Number.isNaN(parsed.valueOf()) && parsed.toISOString().slice(0, 10) === value;
+  if (typeof value !== "string") return false;
+  const precision = /^\d{4}-\d{2}$/.test(value) ? 7 : /^\d{4}-\d{2}-\d{2}$/.test(value) ? 10 : 0;
+  if (!precision) return false;
+  const parsed = new Date(`${value}${precision === 7 ? "-01" : ""}T00:00:00Z`);
+  return !Number.isNaN(parsed.valueOf()) && parsed.toISOString().slice(0, precision) === value;
+}
+
+function normalizeImageSource(value) {
+  if (typeof value !== "string") {
+    throw new Error("Image src must be a site image URL or a copied src/assets/images path.");
+  }
+  const normalized = value.trim().replace(/\\/g, "/");
+  const directPath = normalized.match(/^\/?images\/(.+)$/i);
+  const copiedPath = normalized.match(/(?:^|\/)src\/assets\/images\/(.+)$/i);
+  const relativePath = directPath?.[1] || copiedPath?.[1];
+  if (!relativePath || relativePath.split("/").some((part) => !part || part === "." || part === "..")) {
+    throw new Error(`Invalid image src "${value}". Use /images/... or a copied src/assets/images/... path.`);
+  }
+  return {
+    url: `/images/${relativePath}`,
+    relativePath,
+  };
 }
 
 export default function (eleventyConfig) {
@@ -30,6 +49,7 @@ export default function (eleventyConfig) {
     "src/assets/js": "assets/js",
     "src/assets/images": "images",
   });
+  eleventyConfig.addFilter("imageUrl", (value) => normalizeImageSource(value).url);
   eleventyConfig.addFilter("groupByYear", (entries) => {
     const groups = [];
     for (const entry of entries) {
@@ -45,29 +65,32 @@ export default function (eleventyConfig) {
   });
 
   eleventyConfig.addCollection("timeline", (collectionApi) => {
-    const entries = collectionApi.getFilteredByGlob("src/content/entries/*.md");
+    const entries = collectionApi.getFilteredByGlob("src/content/entries/**/*.md");
     for (const entry of entries) {
-      const { title, date, category, images = [] } = entry.data;
+      const { title, date, images = [] } = entry.data;
       if (!title || !isRealDate(date)) {
-        throw new Error(`${entry.inputPath} must have a title and a real YYYY-MM-DD date string.`);
-      }
-      if (!categories.has(category)) {
-        throw new Error(`${entry.inputPath} category must be gallery, travel, or games.`);
+        throw new Error(`${entry.inputPath} must have a title and a real YYYY-MM or YYYY-MM-DD date string.`);
       }
       if (!Array.isArray(images)) {
         throw new Error(`${entry.inputPath} images must be a list.`);
       }
-      if (entry.data.time && !/^\d{2}:\d{2}$/.test(entry.data.time)) {
-        throw new Error(`${entry.inputPath} time must use HH:MM when supplied.`);
+      if (!images.length && !entry.data.draft) {
+        throw new Error(`${entry.inputPath} must include at least one image unless it is a draft placeholder.`);
+      }
+      if (entry.data.time && (date.length !== 10 || !/^\d{2}:\d{2}$/.test(entry.data.time))) {
+        throw new Error(`${entry.inputPath} time must use HH:MM and a full YYYY-MM-DD date.`);
       }
       for (const image of images) {
-        const imageDate = image.date || date;
-        if (!image.src || !image.src.startsWith("/images/") || !image.alt || typeof image.caption !== "string" || !isRealDate(imageDate) || (image.time && !/^\d{2}:\d{2}$/.test(image.time))) {
-          throw new Error(`${entry.inputPath} images need a /images/ path, alt text, caption, and valid date.`);
+        if (!image.date || !isRealDate(image.date) || !image.alt?.trim() || typeof image.caption !== "string" || !image.caption.trim() || !categories.has(image.category) || !Array.isArray(image.tags) || image.tags.some((tag) => typeof tag !== "string")) {
+          throw new Error(`${entry.inputPath} images need a valid date, alt text, caption, category, and tags list.`);
         }
-        const sourceImage = path.resolve("src/assets/images", image.src.slice("/images/".length));
+        if (image.time && (image.date.length !== 10 || !/^\d{2}:\d{2}$/.test(image.time))) {
+          throw new Error(`${entry.inputPath} image time must use HH:MM and a full YYYY-MM-DD date.`);
+        }
+        const normalizedImage = normalizeImageSource(image.src);
+        const sourceImage = path.resolve("src/assets/images", ...normalizedImage.relativePath.split("/"));
         if (!fs.existsSync(sourceImage)) {
-          throw new Error(`${entry.inputPath} image file does not exist: ${image.src}`);
+          throw new Error(`${entry.inputPath} image file does not exist: ${normalizedImage.url}`);
         }
       }
     }
